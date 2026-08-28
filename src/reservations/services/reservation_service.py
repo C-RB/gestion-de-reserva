@@ -6,6 +6,8 @@ from ..exceptions.reservation_errors import (
     InsufficientCapacityError,
     InvalidPartySizeError,
     MissingRequiredDataError,
+    ReservationAlreadyCancelledError,
+    ReservationNotFoundError,
 )
 from ..models.reservation import Reservation, ReservationStatus
 from ..repositories.reservation_repository import InMemoryReservationRepository
@@ -101,6 +103,23 @@ class ReservationService:
             if reservation.time == reservation_time
             and reservation.status == ReservationStatus.ACTIVE
         )
+
+    def cancel_reservation(self, code: str) -> Reservation:
+        reservation = self._get_reservation_or_raise(code)
+        if reservation.status == ReservationStatus.CANCELLED:
+            raise ReservationAlreadyCancelledError(
+                f"La reserva '{code}' ya se encuentra cancelada."
+            )
+        reservation.status = ReservationStatus.CANCELLED
+        return reservation
+
+    def _get_reservation_or_raise(self, code: str) -> Reservation:
+        reservation = self._repository.find(code)
+        if reservation is None:
+            raise ReservationNotFoundError(
+                f"No existe una reserva con el código '{code}'."
+            )
+        return reservation
 
     def _generate_code(self) -> str:
         code = f"RES-{self._next_code:04d}"
