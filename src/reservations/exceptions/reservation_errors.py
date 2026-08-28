@@ -12,3 +12,11 @@ class InvalidPartySizeError(ReservationError):
 
 class InsufficientCapacityError(ReservationError):
     """Raised when there is no availability for the requested date and time."""
+
+
+class ReservationNotFoundError(ReservationError):
+    """Raised when a reservation code does not exist."""
+
+
+class ReservationAlreadyCancelledError(ReservationError):
+    """Raised when trying to cancel a reservation that is already cancelled."""

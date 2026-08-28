@@ -6,6 +6,8 @@ from ..exceptions.reservation_errors import (
     InsufficientCapacityError,
     InvalidPartySizeError,
     MissingRequiredDataError,
+    ReservationAlreadyCancelledError,
+    ReservationNotFoundError,
 )
 from ..models.reservation import Reservation, ReservationStatus
 from ..repositories.reservation_repository import InMemoryReservationRepository
@@ -31,6 +33,7 @@ class ReservationService:
         reservation_time: TimeType,
     ) -> Reservation:
         self._validate(customer_name, party_size, reservation_date, reservation_time)
+        self.check_availability(reservation_date, reservation_time, party_size)
 
         reservation = Reservation(
             code=self._generate_code(),
@@ -40,6 +43,21 @@ class ReservationService:
             time=reservation_time,
         )
         return self._repository.save(reservation)
+
+    def check_availability(
+        self,
+        reservation_date: DateType,
+        reservation_time: TimeType,
+        party_size: int = 0,
+    ) -> int:
+        available = self._max_capacity - self._occupied_capacity(
+            reservation_date, reservation_time
+        )
+        if party_size > available:
+            raise InsufficientCapacityError(
+                "No hay disponibilidad para la fecha y hora solicitada."
+            )
+        return available
 
     def _validate(
         self,
@@ -60,7 +78,20 @@ class ReservationService:
             raise InvalidPartySizeError(
                 "El número de personas debe ser un entero mayor a cero."
             )
-    
+
+    def _ensure_availability(
+        self,
+        party_size: int,
+        reservation_date: DateType,
+        reservation_time: TimeType,
+    ) -> None:
+        available = self.check_availability(reservation_date, reservation_time)
+
+        if party_size > available:
+            raise InsufficientCapacityError(
+                "No hay disponibilidad para la fecha y hora solicitada."
+            )
+
     def _occupied_capacity(
         self,
         reservation_date: DateType,
@@ -72,6 +103,23 @@ class ReservationService:
             if reservation.time == reservation_time
             and reservation.status == ReservationStatus.ACTIVE
         )
+
+    def cancel_reservation(self, code: str) -> Reservation:
+        reservation = self._get_reservation_or_raise(code)
+        if reservation.status == ReservationStatus.CANCELLED:
+            raise ReservationAlreadyCancelledError(
+                f"La reserva '{code}' ya se encuentra cancelada."
+            )
+        reservation.status = ReservationStatus.CANCELLED
+        return reservation
+
+    def _get_reservation_or_raise(self, code: str) -> Reservation:
+        reservation = self._repository.find(code)
+        if reservation is None:
+            raise ReservationNotFoundError(
+                f"No existe una reserva con el código '{code}'."
+            )
+        return reservation
 
     def _generate_code(self) -> str:
         code = f"RES-{self._next_code:04d}"
