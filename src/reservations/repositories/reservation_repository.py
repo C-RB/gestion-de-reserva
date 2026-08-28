@@ -10,10 +10,11 @@ class InMemoryReservationRepository:
         self._reservations: dict[str, Reservation] = {}
 
     def save(self, reservation: Reservation) -> Reservation:
-        raise NotImplementedError
+        self._reservations[reservation.code] = reservation
+        return reservation
 
     def find(self, code: str) -> Reservation | None:
-        raise NotImplementedError
+        return self._reservations.get(code)
 
     def find_by_date(self, date: date) -> list[Reservation]:
-        raise NotImplementedError
+        return [reservation for reservation in self._reservations.values() if reservation.date == date]
