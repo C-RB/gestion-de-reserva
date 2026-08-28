@@ -87,7 +87,6 @@ class ReservationService:
             reservation.party_size
             for reservation in self._repository.find_by_date(reservation_date)
             if reservation.time == reservation_time
-            and reservation.status == ReservationStatus.ACTIVE
         )
 
     def cancel_reservation(self, code: str) -> Reservation:

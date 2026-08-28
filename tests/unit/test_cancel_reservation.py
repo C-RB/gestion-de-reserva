@@ -37,3 +37,17 @@ class TestCancelReservation:
 
         with pytest.raises(ReservationAlreadyCancelledError):
             service.cancel_reservation(reservation.code)
+
+    def test_frees_capacity_after_cancellation(self, service):
+        first = service.create_reservation(
+            "Ana", 26, date(2026, 9, 1), time(20, 0)
+        )
+        service.create_reservation("Luis", 4, date(2026, 9, 1), time(20, 0))
+
+        service.cancel_reservation(first.code)
+
+        reservation = service.create_reservation(
+            "Marta", 20, date(2026, 9, 1), time(20, 0)
+        )
+
+        assert reservation.party_size == 20
