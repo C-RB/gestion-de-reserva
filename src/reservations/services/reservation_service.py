@@ -42,6 +42,15 @@ class ReservationService:
         )
         return self._repository.save(reservation)
 
+    def check_availability(
+        self,
+        reservation_date: DateType,
+        reservation_time: TimeType,
+    ) -> int:
+        return self._max_capacity - self._occupied_capacity(
+            reservation_date, reservation_time
+        )
+
     def _validate(
         self,
         customer_name: str,
