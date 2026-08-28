@@ -31,7 +31,7 @@ class ReservationService:
         reservation_time: TimeType,
     ) -> Reservation:
         self._validate(customer_name, party_size, reservation_date, reservation_time)
-        self._ensure_availability(party_size, reservation_date, reservation_time)
+        self.check_availability(reservation_date, reservation_time, party_size)
 
         reservation = Reservation(
             code=self._generate_code(),
@@ -46,10 +46,16 @@ class ReservationService:
         self,
         reservation_date: DateType,
         reservation_time: TimeType,
+        party_size: int = 0,
     ) -> int:
-        return self._max_capacity - self._occupied_capacity(
+        available = self._max_capacity - self._occupied_capacity(
             reservation_date, reservation_time
         )
+        if party_size > available:
+            raise InsufficientCapacityError(
+                "No hay disponibilidad para la fecha y hora solicitada."
+            )
+        return available
 
     def _validate(
         self,
