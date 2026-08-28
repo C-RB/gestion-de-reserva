@@ -2,6 +2,7 @@ from datetime import date, time
 
 import pytest
 
+from reservations.exceptions.reservation_errors import ReservationNotFoundError
 from reservations.models.reservation import ReservationStatus
 from reservations.services.reservation_service import ReservationService
 
@@ -20,3 +21,7 @@ class TestCancelReservation:
         cancelled = service.cancel_reservation(reservation.code)
 
         assert cancelled.status == ReservationStatus.CANCELLED
+
+    def test_rejects_cancellation_of_nonexistent_code(self, service):
+        with pytest.raises(ReservationNotFoundError):
+            service.cancel_reservation("RES-9999")
