@@ -91,16 +91,20 @@ class ReservationService:
         )
 
     def cancel_reservation(self, code: str) -> Reservation:
-        reservation = self._repository.find(code)
-        if reservation is None:
-            raise ReservationNotFoundError(
-                f"No existe una reserva con el código '{code}'."
-            )
+        reservation = self._get_reservation_or_raise(code)
         if reservation.status == ReservationStatus.CANCELLED:
             raise ReservationAlreadyCancelledError(
                 f"La reserva '{code}' ya se encuentra cancelada."
             )
         reservation.status = ReservationStatus.CANCELLED
+        return reservation
+
+    def _get_reservation_or_raise(self, code: str) -> Reservation:
+        reservation = self._repository.find(code)
+        if reservation is None:
+            raise ReservationNotFoundError(
+                f"No existe una reserva con el código '{code}'."
+            )
         return reservation
 
     def _generate_code(self) -> str:
