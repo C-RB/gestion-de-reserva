@@ -6,6 +6,7 @@ from ..exceptions.reservation_errors import (
     InsufficientCapacityError,
     InvalidPartySizeError,
     MissingRequiredDataError,
+    ReservationAlreadyCancelledError,
     ReservationNotFoundError,
 )
 from ..models.reservation import Reservation, ReservationStatus
@@ -94,6 +95,10 @@ class ReservationService:
         if reservation is None:
             raise ReservationNotFoundError(
                 f"No existe una reserva con el código '{code}'."
+            )
+        if reservation.status == ReservationStatus.CANCELLED:
+            raise ReservationAlreadyCancelledError(
+                f"La reserva '{code}' ya se encuentra cancelada."
             )
         reservation.status = ReservationStatus.CANCELLED
         return reservation
