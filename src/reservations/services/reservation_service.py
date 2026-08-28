@@ -6,6 +6,7 @@ from ..exceptions.reservation_errors import (
     InsufficientCapacityError,
     InvalidPartySizeError,
     MissingRequiredDataError,
+    ReservationNotFoundError,
 )
 from ..models.reservation import Reservation, ReservationStatus
 from ..repositories.reservation_repository import InMemoryReservationRepository
@@ -90,6 +91,10 @@ class ReservationService:
 
     def cancel_reservation(self, code: str) -> Reservation:
         reservation = self._repository.find(code)
+        if reservation is None:
+            raise ReservationNotFoundError(
+                f"No existe una reserva con el código '{code}'."
+            )
         reservation.status = ReservationStatus.CANCELLED
         return reservation
 
