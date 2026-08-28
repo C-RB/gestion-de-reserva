@@ -42,6 +42,15 @@ class ReservationService:
         )
         return self._repository.save(reservation)
 
+    def check_availability(
+        self,
+        reservation_date: DateType,
+        reservation_time: TimeType,
+    ) -> int:
+        return self._max_capacity - self._occupied_capacity(
+            reservation_date, reservation_time
+        )
+
     def _validate(
         self,
         customer_name: str,
@@ -68,9 +77,8 @@ class ReservationService:
         reservation_date: DateType,
         reservation_time: TimeType,
     ) -> None:
-        available = self._max_capacity - self._occupied_capacity(
-            reservation_date, reservation_time
-        )
+        available = self.check_availability(reservation_date, reservation_time)
+
         if party_size > available:
             raise InsufficientCapacityError(
                 "No hay disponibilidad para la fecha y hora solicitada."
