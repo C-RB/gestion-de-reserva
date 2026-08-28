@@ -9,7 +9,7 @@ from ..exceptions.reservation_errors import (
     ReservationAlreadyCancelledError,
     ReservationNotFoundError,
 )
-from ..models.reservation import Reservation, ReservationStatus
+from ..models.reservation import Reservation
 from ..repositories.reservation_repository import InMemoryReservationRepository
 
 DEFAULT_MAX_CAPACITY = 30
@@ -85,18 +85,17 @@ class ReservationService:
     ) -> int:
         return sum(
             reservation.party_size
-            for reservation in self._repository.find_by_date(reservation_date)
+            for reservation in self.list_reservations_by_date(reservation_date)
             if reservation.time == reservation_time
-            and reservation.status == ReservationStatus.ACTIVE
         )
 
     def cancel_reservation(self, code: str) -> Reservation:
         reservation = self._get_reservation_or_raise(code)
-        if reservation.status == ReservationStatus.CANCELLED:
+        if not reservation.is_active:
             raise ReservationAlreadyCancelledError(
                 f"La reserva '{code}' ya se encuentra cancelada."
             )
-        reservation.status = ReservationStatus.CANCELLED
+        reservation.cancel()
         return reservation
 
     def list_reservations_by_date(
@@ -104,13 +103,11 @@ class ReservationService:
         reservation_date: DateType,
         include_cancelled: bool = False,
     ) -> list[Reservation]:
-        reservations = self._repository.find_by_date(reservation_date)
-        if not include_cancelled:
-            reservations = [
-                reservation
-                for reservation in reservations
-                if reservation.status == ReservationStatus.ACTIVE
-            ]
+        reservations = [
+            reservation
+            for reservation in self._repository.find_by_date(reservation_date)
+            if include_cancelled or reservation.is_active
+        ]
         return sorted(reservations, key=lambda reservation: reservation.time)
 
     def _get_reservation_or_raise(self, code: str) -> Reservation:

@@ -16,3 +16,10 @@ class Reservation:
     date: date
     time: time
     status: ReservationStatus = ReservationStatus.ACTIVE
+
+    @property
+    def is_active(self) -> bool:
+        return self.status == ReservationStatus.ACTIVE
+
+    def cancel(self) -> None:
+        self.status = ReservationStatus.CANCELLED
