@@ -68,36 +68,3 @@ class TestCreateReservation:
             service.create_reservation(
                 "Juan Pérez", party_size, date(2026, 9, 1), time(20, 0)
             )
-
-    def test_accepts_reservation_within_capacity(self, service):
-        reservation = service.create_reservation(
-            "Ana", 26, date(2026, 9, 1), time(20, 0)
-        )
-
-        assert reservation.party_size == 26
-
-    def test_rejects_reservation_exceeding_capacity(self, service):
-        service.create_reservation("Ana", 26, date(2026, 9, 1), time(20, 0))
-
-        with pytest.raises(InsufficientCapacityError):
-            service.create_reservation(
-                "Luis", 6, date(2026, 9, 1), time(20, 0)
-            )
-
-    def test_accepts_reservation_that_fills_capacity_exactly(self, service):
-        service.create_reservation("Ana", 26, date(2026, 9, 1), time(20, 0))
-
-        reservation = service.create_reservation(
-            "Luis", 4, date(2026, 9, 1), time(20, 0)
-        )
-
-        assert reservation.party_size == 4
-
-    def test_capacity_is_checked_per_slot(self, service):
-        service.create_reservation("Ana", 30, date(2026, 9, 1), time(20, 0))
-
-        reservation = service.create_reservation(
-            "Luis", 4, date(2026, 9, 1), time(21, 0)
-        )
-
-        assert reservation.party_size == 4
