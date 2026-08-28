@@ -88,6 +88,11 @@ class ReservationService:
             and reservation.status == ReservationStatus.ACTIVE
         )
 
+    def cancel_reservation(self, code: str) -> Reservation:
+        reservation = self._repository.find(code)
+        reservation.status = ReservationStatus.CANCELLED
+        return reservation
+
     def _generate_code(self) -> str:
         code = f"RES-{self._next_code:04d}"
         self._next_code += 1
