@@ -99,6 +99,20 @@ class ReservationService:
         reservation.status = ReservationStatus.CANCELLED
         return reservation
 
+    def list_reservations_by_date(
+        self,
+        reservation_date: DateType,
+        include_cancelled: bool = False,
+    ) -> list[Reservation]:
+        reservations = self._repository.find_by_date(reservation_date)
+        if not include_cancelled:
+            reservations = [
+                reservation
+                for reservation in reservations
+                if reservation.status == ReservationStatus.ACTIVE
+            ]
+        return sorted(reservations, key=lambda reservation: reservation.time)
+
     def _get_reservation_or_raise(self, code: str) -> Reservation:
         reservation = self._repository.find(code)
         if reservation is None:
